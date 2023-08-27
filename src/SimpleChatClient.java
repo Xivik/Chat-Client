@@ -12,14 +12,14 @@ import java.util.concurrent.Executors;
 
 public class SimpleChatClient {
 
-    private JTextArea incoming;
-    private JTextField outgoing;
+
     private BufferedReader reader;
     private PrintWriter writer;
 
     private JFrame frame;
-    private JPanel loginPanel;
-    private JTextField nicknameField;
+    private LoginView loginPanel;
+    private ChatRoomView mainPanel = new ChatRoomView(this);
+
 
     public void go() {
         setUpNetworking();
@@ -28,19 +28,9 @@ public class SimpleChatClient {
         frame.setSize(800,600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        loginPanel = new JPanel();
-        JButton loginButton = new JButton("Enter chat");
-        nicknameField = new JTextField(20);
-        JLabel nickLabel = new JLabel("Choose your nickname");
-        loginButton.addActionListener(e -> launchMainApp());
-
-        loginPanel.add(nickLabel);
-        loginPanel.add(nicknameField);
-        loginPanel.add(loginButton);
-
+        loginPanel = new LoginView(this);
 
         frame.getContentPane().add(BorderLayout.CENTER,loginPanel);
-
         frame.setVisible(true);
 
 
@@ -50,43 +40,15 @@ public class SimpleChatClient {
 
     }
 
-    private void launchMainApp() {
-        if (!nicknameField.getText().equals("")) {
+    public void launchMainApp(String nicknameField) {
+        if (!nicknameField.equals("")) {
             frame.getContentPane().remove(loginPanel);
-            frame.getContentPane().add(BorderLayout.CENTER,createMainPanel());
+            frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
             frame.revalidate();
             frame.repaint();
         }
     }
 
-    private JPanel createMainPanel() {
-        JScrollPane scroller = createScrollableTextArea();
-        outgoing = new JTextField(20);
-        JButton sendButton = new JButton("Send");
-        sendButton.addActionListener(e -> sendMessage());
-
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        JPanel textAndButtonPanel = new JPanel();
-        textAndButtonPanel.add(outgoing);
-        textAndButtonPanel.add(sendButton);
-        mainPanel.add(scroller);
-        mainPanel.add(textAndButtonPanel);
-
-
-        return mainPanel;
-    }
-
-    private JScrollPane createScrollableTextArea() {
-        incoming = new JTextArea(15,30);
-        incoming.setLineWrap(true);
-        incoming.setWrapStyleWord(true);
-        incoming.setEditable(false);
-        JScrollPane scroller = new JScrollPane(incoming);
-        scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        return scroller;
-    }
 
     private void setUpNetworking() {
 
@@ -103,7 +65,7 @@ public class SimpleChatClient {
 
         }
 
-        private void sendMessage() {
+        public void sendMessage(JTextField outgoing) {
         writer.println(outgoing.getText());
         writer.flush();
         outgoing.setText("");
@@ -117,7 +79,7 @@ public class SimpleChatClient {
             try {
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
-                    incoming.append(message + "\n");
+                    mainPanel.getIncoming().append(message + "\n");
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
