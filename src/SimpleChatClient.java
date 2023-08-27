@@ -17,27 +17,64 @@ public class SimpleChatClient {
     private BufferedReader reader;
     private PrintWriter writer;
 
+    private JFrame frame;
+    private JPanel loginPanel;
+    private JTextField nicknameField;
+
     public void go() {
         setUpNetworking();
 
+        frame = new JFrame("Simple Chat Client");
+        frame.setSize(800,600);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        loginPanel = new JPanel();
+        JButton loginButton = new JButton("Enter chat");
+        nicknameField = new JTextField(20);
+        JLabel nickLabel = new JLabel("Choose your nickname");
+        loginButton.addActionListener(e -> launchMainApp());
+
+        loginPanel.add(nickLabel);
+        loginPanel.add(nicknameField);
+        loginPanel.add(loginButton);
+
+
+        frame.getContentPane().add(BorderLayout.CENTER,loginPanel);
+
+        frame.setVisible(true);
+
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(new IncomingReader());
+
+
+    }
+
+    private void launchMainApp() {
+        if (!nicknameField.getText().equals("")) {
+            frame.getContentPane().remove(loginPanel);
+            frame.getContentPane().add(BorderLayout.CENTER,createMainPanel());
+            frame.revalidate();
+            frame.repaint();
+        }
+    }
+
+    private JPanel createMainPanel() {
         JScrollPane scroller = createScrollableTextArea();
         outgoing = new JTextField(20);
         JButton sendButton = new JButton("Send");
         sendButton.addActionListener(e -> sendMessage());
 
         JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        JPanel textAndButtonPanel = new JPanel();
+        textAndButtonPanel.add(outgoing);
+        textAndButtonPanel.add(sendButton);
         mainPanel.add(scroller);
-        mainPanel.add(outgoing);
-        mainPanel.add(sendButton);
+        mainPanel.add(textAndButtonPanel);
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(new IncomingReader());
 
-        JFrame frame = new JFrame("Simple Chat Client");
-        frame.getContentPane().add(BorderLayout.CENTER,mainPanel);
-        frame.setSize(400,350);
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        return mainPanel;
     }
 
     private JScrollPane createScrollableTextArea() {

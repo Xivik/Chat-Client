@@ -20,8 +20,7 @@ public class SimpleChatServer {
 
     public void go() {
         ExecutorService threadPool = Executors.newCachedThreadPool();
-        try {
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()){
             serverSocketChannel.bind(new InetSocketAddress("127.0.0.1", 8020));
 
             while(serverSocketChannel.isOpen()) {
