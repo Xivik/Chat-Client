@@ -8,6 +8,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -46,17 +47,37 @@ public class SimpleChatServer {
         BufferedReader reader;
         SocketChannel socket;
 
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        private String username;
+
+        public static List<ClientHandler> clients = new CopyOnWriteArrayList<>();
+
         public ClientHandler(SocketChannel clientSocket) {
             socket = clientSocket;
             reader = new BufferedReader(Channels.newReader(socket, StandardCharsets.UTF_8));
+            this.username = username;
         }
 
         public void run() {
+            clients.add(this);
             String message;
             try {
                 while( (message = reader.readLine()) != null) {
-                    System.out.println("read " + message);
-                    tellEveryone(message);
+                    if (message.startsWith("New login: ")) {
+                        this.username = message.substring(10);
+                        tellEveryone(username + " has entered the chat!");
+                    } else {
+                        System.out.println("read " + message);
+                        tellEveryone(message);
+                    }
+
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
