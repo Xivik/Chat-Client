@@ -64,7 +64,7 @@ public class SimpleChatServer {
 
         private String username;
 
-        public static List<ClientHandler> clients = new CopyOnWriteArrayList<>();
+        public static List<String> clients = new CopyOnWriteArrayList<>();
 
         public ClientHandler(SocketChannel clientSocket) {
             socket = clientSocket;
@@ -73,12 +73,21 @@ public class SimpleChatServer {
         }
 
         public void run() {
-            clients.add(this);
+
             String message;
             try {
                 while( (message = reader.readLine()) != null) {
                     if (message.startsWith("New login: ")) {
                         this.username = message.substring(10);
+                        clients.add(this.getUsername());
+
+                        StringBuilder usersString = new StringBuilder("UserlistUpdate ,");
+
+                        for (String user : clients) {
+                            usersString.append(user + ",");
+                        }
+
+                        tellEveryone(usersString.toString());
                         tellEveryone(username + " has entered the chat!");
                     } else {
                         System.out.println("read " + message);

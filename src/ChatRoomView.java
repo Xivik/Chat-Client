@@ -1,4 +1,5 @@
 import javax.swing.*;
+import java.awt.*;
 
 public class ChatRoomView extends JPanel {
 
@@ -6,6 +7,8 @@ public class ChatRoomView extends JPanel {
 
     private JTextArea incoming;
     private JTextField outgoing;
+
+    private JList<String> activeUsers;
     
     public ChatRoomView(SimpleChatClient simpleChatClient) {
         outgoing = new JTextField(20);
@@ -20,16 +23,32 @@ public class ChatRoomView extends JPanel {
         scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+        activeUsers = new JList<>();
+
+        JPanel chatView = new JPanel();
+        JPanel userView = new JPanel();
         JPanel textAndButtonPanel = new JPanel();
+
+        chatView.setLayout(new BoxLayout(chatView,BoxLayout.Y_AXIS));
+
+
         textAndButtonPanel.add(outgoing);
         textAndButtonPanel.add(sendButton);
-        this.add(scroller);
-        this.add(textAndButtonPanel);
+        chatView.add(scroller);
+        chatView.add(textAndButtonPanel);
+        userView.add(activeUsers);
+        this.add(chatView, BorderLayout.CENTER);
+        this.add(userView, BorderLayout.EAST);
+
+
     }
 
     public JTextArea getIncoming() {
         return incoming;
     }
 
+    public JList<String> getActiveUsers() {
+        return activeUsers;
+    }
 }

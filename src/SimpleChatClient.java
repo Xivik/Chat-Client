@@ -90,7 +90,14 @@ public class SimpleChatClient {
             try {
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
-                    mainPanel.getIncoming().append(message + "\n");
+                    if (message.startsWith("UserlistUpdate")) {
+                        String[] usersArray = message.split(",");
+                        usersArray[0] = "Online users:";
+                        mainPanel.getActiveUsers().setListData(usersArray);
+                    } else {
+                        mainPanel.getIncoming().append(message + "\n");
+                    }
+
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
