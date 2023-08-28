@@ -36,6 +36,13 @@ public class SimpleChatServer {
         }
     }
 
+    private void tellEveryone(ClientHandler user, String message) {
+        for (PrintWriter writer : clientWriters) {
+            writer.println(user.getUsername() + ": " + message);
+            writer.flush();
+        }
+    }
+
     private void tellEveryone(String message) {
         for (PrintWriter writer : clientWriters) {
             writer.println(message);
@@ -75,7 +82,7 @@ public class SimpleChatServer {
                         tellEveryone(username + " has entered the chat!");
                     } else {
                         System.out.println("read " + message);
-                        tellEveryone(message);
+                        tellEveryone(this,message);
                     }
 
                 }

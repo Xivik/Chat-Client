@@ -40,13 +40,13 @@ public class SimpleChatClient {
 
     }
 
-    public void launchMainApp(String nicknameField) {
-        if (!nicknameField.equals("")) {
+    public void launchMainApp() {
+
             frame.getContentPane().remove(loginPanel);
             frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
             frame.revalidate();
             frame.repaint();
-        }
+
     }
 
 
@@ -62,6 +62,17 @@ public class SimpleChatClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        }
+
+        public void loginMessage(String username) {
+            writer.println("New login: " + username);
+            writer.flush();
+            if (!username.equals("")) {
+                launchMainApp();
+            } else {
+                JOptionPane.showMessageDialog(null, "Nickname cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
 
         }
 
