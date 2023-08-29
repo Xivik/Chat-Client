@@ -51,16 +51,8 @@ public class SimpleChatServer {
 
     public class ClientHandler implements Runnable {
 
-        SocketChannel socket;
+        final SocketChannel socket;
         ObjectInputStream inputStream;
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getUsername() {
-            return username;
-        }
 
         private String username;
 
@@ -76,7 +68,7 @@ public class SimpleChatServer {
                 e.printStackTrace();
             }
 
-            this.username = username;
+            //this.username = username;
         }
 
         public void run() {

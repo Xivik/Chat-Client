@@ -3,7 +3,7 @@ import java.util.List;
 
 public class Message implements Serializable {
 
-    private String type;
+    private final String type;
 
     private String message;
 

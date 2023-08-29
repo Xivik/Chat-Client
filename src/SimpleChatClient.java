@@ -16,7 +16,7 @@ public class SimpleChatClient {
 
     private JFrame frame;
     private LoginView loginPanel;
-    private ChatRoomView mainPanel = new ChatRoomView(this);
+    private final ChatRoomView mainPanel = new ChatRoomView(this);
 
 
     public void go() {
@@ -56,10 +56,9 @@ public class SimpleChatClient {
 
 
     private void setUpNetworking() {
+        InetSocketAddress serverAdress = new InetSocketAddress("127.0.0.1",8020);
+        try (SocketChannel socketChannel = SocketChannel.open(serverAdress)) {
 
-        try {
-            InetSocketAddress serverAdress = new InetSocketAddress("127.0.0.1",8020);
-            SocketChannel socketChannel = SocketChannel.open(serverAdress);
             reader = new ObjectInputStream(socketChannel.socket().getInputStream());
             writer = new ObjectOutputStream(socketChannel.socket().getOutputStream());
 

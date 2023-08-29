@@ -3,9 +3,9 @@ import java.awt.*;
 
 public class ChatRoomView extends JPanel {
 
-    private JTextArea incoming;
-    private JTextField outgoing;
-    private JList<String> activeUsers;
+    private final JTextArea incoming;
+    private final JTextField outgoing;
+    private final JList<String> activeUsers;
 
     public ChatRoomView(SimpleChatClient simpleChatClient) {
         this.setBackground(new Color(32, 34, 38));
