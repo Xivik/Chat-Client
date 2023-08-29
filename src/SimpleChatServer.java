@@ -1,11 +1,9 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
-import java.nio.channels.Channels;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SimpleChatServer {
-    private final List<PrintWriter> clientWriters = new ArrayList<>();
+    private final List<ObjectOutputStream> clientWriters = new ArrayList<>();
 
     public static void main(String[] args) {
         new SimpleChatServer().go();
@@ -26,7 +24,7 @@ public class SimpleChatServer {
 
             while(serverSocketChannel.isOpen()) {
                 SocketChannel clientSocket = serverSocketChannel.accept();
-                PrintWriter writer = new PrintWriter(Channels.newWriter(clientSocket, StandardCharsets.UTF_8));
+                ObjectOutputStream writer = new ObjectOutputStream(clientSocket.socket().getOutputStream());
                 clientWriters.add(writer);
                 threadPool.submit(new ClientHandler(clientSocket));
                 System.out.println("got a connection");
@@ -36,23 +34,25 @@ public class SimpleChatServer {
         }
     }
 
-    private void tellEveryone(ClientHandler user, String message) {
-        for (PrintWriter writer : clientWriters) {
-            writer.println(user.getUsername() + ": " + message);
-            writer.flush();
-        }
-    }
 
-    private void tellEveryone(String message) {
-        for (PrintWriter writer : clientWriters) {
-            writer.println(message);
-            writer.flush();
+
+    private void tellEveryone(Message message) {
+        for (ObjectOutputStream writer : clientWriters) {
+            try {
+                writer.writeObject(message);
+                writer.flush();
+            } catch (IOException e) {
+                System.out.println("Writing to clients failed.");
+                e.printStackTrace();
+            }
+
         }
     }
 
     public class ClientHandler implements Runnable {
-        BufferedReader reader;
+
         SocketChannel socket;
+        ObjectInputStream inputStream;
 
         public void setUsername(String username) {
             this.username = username;
@@ -68,35 +68,40 @@ public class SimpleChatServer {
 
         public ClientHandler(SocketChannel clientSocket) {
             socket = clientSocket;
-            reader = new BufferedReader(Channels.newReader(socket, StandardCharsets.UTF_8));
+
+            try {
+                inputStream = new ObjectInputStream(socket.socket().getInputStream());
+            } catch (IOException e) {
+                System.out.println("Error creating inputstream");
+                e.printStackTrace();
+            }
+
             this.username = username;
         }
 
         public void run() {
 
-            String message;
+            Message message;
+
             try {
-                while( (message = reader.readLine()) != null) {
-                    if (message.startsWith("New login: ")) {
-                        this.username = message.substring(10);
-                        clients.add(this.getUsername());
+                while(true) {
 
-                        StringBuilder usersString = new StringBuilder("UserlistUpdate ,");
-
-                        for (String user : clients) {
-                            usersString.append(user + ",");
-                        }
-
-                        tellEveryone(usersString.toString());
-                        tellEveryone(username + " has entered the chat!");
-                    } else {
+                    message = (Message) inputStream.readObject();
+                    if (message.getType().equals("USERS_UPDATE")) {
+                        this.username = message.getMessage();
+                        clients.add(username);
+                        tellEveryone(new Message("USERS_UPDATE", clients));
+                        tellEveryone(new Message("MESSAGE",username + " has entered the chat!"));
+                    } else if (message.getType().equals("MESSAGE")) {
                         System.out.println("read " + message);
-                        tellEveryone(this,message);
+                        tellEveryone(new Message("MESSAGE", username +": " +message.getMessage()));
                     }
 
                 }
-            } catch (IOException ex) {
+            } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
+                clients.remove(username);
+                tellEveryone(new Message("USERS_UPDATE", clients));
             }
         }
     }

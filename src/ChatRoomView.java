@@ -3,45 +3,47 @@ import java.awt.*;
 
 public class ChatRoomView extends JPanel {
 
-
-
     private JTextArea incoming;
     private JTextField outgoing;
-
     private JList<String> activeUsers;
-    
+
     public ChatRoomView(SimpleChatClient simpleChatClient) {
+        this.setBackground(new Color(32, 34, 38));
         outgoing = new JTextField(20);
         JButton sendButton = new JButton("Send");
         sendButton.addActionListener(e -> simpleChatClient.sendMessage(outgoing));
 
-        incoming = new JTextArea(15,30);
+        incoming = new JTextArea(15, 30);
         incoming.setLineWrap(true);
         incoming.setWrapStyleWord(true);
         incoming.setEditable(false);
+        incoming.setBackground(new Color(42,46,54));
+        incoming.setForeground(new Color(230,230,230));
         JScrollPane scroller = new JScrollPane(incoming);
         scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-
         activeUsers = new JList<>();
 
+
         JPanel chatView = new JPanel();
-        JPanel userView = new JPanel();
+        chatView.setLayout(new BorderLayout());
+
         JPanel textAndButtonPanel = new JPanel();
-
-        chatView.setLayout(new BoxLayout(chatView,BoxLayout.Y_AXIS));
-
-
         textAndButtonPanel.add(outgoing);
         textAndButtonPanel.add(sendButton);
-        chatView.add(scroller);
-        chatView.add(textAndButtonPanel);
+        textAndButtonPanel.setBackground(new Color(32, 34, 38));
+
+        chatView.add(scroller, BorderLayout.CENTER);
+        chatView.add(textAndButtonPanel, BorderLayout.SOUTH);
+
+        JPanel userView = new JPanel();
+        userView.setBackground(new Color(32, 34, 38));
         userView.add(activeUsers);
-        this.add(chatView, BorderLayout.CENTER);
-        this.add(userView, BorderLayout.EAST);
 
-
+        setLayout(new BorderLayout());
+        add(chatView, BorderLayout.CENTER);
+        add(userView, BorderLayout.EAST);
     }
 
     public JTextArea getIncoming() {

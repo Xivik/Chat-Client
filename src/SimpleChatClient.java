@@ -1,20 +1,18 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
-import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SimpleChatClient {
 
 
-    private BufferedReader reader;
-    private PrintWriter writer;
+    private ObjectInputStream reader;
+    private ObjectOutputStream writer;
 
     private JFrame frame;
     private LoginView loginPanel;
@@ -31,6 +29,13 @@ public class SimpleChatClient {
         loginPanel = new LoginView(this);
 
         frame.getContentPane().add(BorderLayout.CENTER,loginPanel);
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
+            System.out.println("UImanager error");
+            e.printStackTrace();
+        }
+
         frame.setVisible(true);
 
 
@@ -55,8 +60,8 @@ public class SimpleChatClient {
         try {
             InetSocketAddress serverAdress = new InetSocketAddress("127.0.0.1",8020);
             SocketChannel socketChannel = SocketChannel.open(serverAdress);
-            reader = new BufferedReader(Channels.newReader(socketChannel, StandardCharsets.UTF_8));
-            writer = new PrintWriter(Channels.newWriter(socketChannel,StandardCharsets.UTF_8));
+            reader = new ObjectInputStream(socketChannel.socket().getInputStream());
+            writer = new ObjectOutputStream(socketChannel.socket().getOutputStream());
 
             System.out.println("Networking established");
         } catch (IOException e) {
@@ -66,7 +71,9 @@ public class SimpleChatClient {
         }
 
         public void loginMessage(String username) {
-            writer.println("New login: " + username);
+
+        try {
+            writer.writeObject(new Message("USERS_UPDATE", username));
             writer.flush();
             if (!username.equals("")) {
                 launchMainApp();
@@ -74,11 +81,22 @@ public class SimpleChatClient {
                 JOptionPane.showMessageDialog(null, "Nickname cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
             }
 
+        } catch (IOException e) {
+            System.out.println("login message failed");
+            e.printStackTrace();
+        }
+
         }
 
         public void sendMessage(JTextField outgoing) {
-        writer.println(outgoing.getText());
-        writer.flush();
+        try {
+            writer.writeObject(new Message("MESSAGE",outgoing.getText()));
+            writer.flush();
+        } catch (IOException e) {
+            System.out.println("Sending message failed.");
+            e.printStackTrace();
+        }
+
         outgoing.setText("");
         outgoing.requestFocus();
 
@@ -86,20 +104,19 @@ public class SimpleChatClient {
 
     public class IncomingReader implements Runnable {
         public void run() {
-            String message;
+            Message message;
             try {
-                while ((message = reader.readLine()) != null) {
-                    System.out.println("read " + message);
-                    if (message.startsWith("UserlistUpdate")) {
-                        String[] usersArray = message.split(",");
-                        usersArray[0] = "Online users:";
-                        mainPanel.getActiveUsers().setListData(usersArray);
-                    } else {
-                        mainPanel.getIncoming().append(message + "\n");
+                while ((message = (Message) reader.readObject()) != null) {
+                    System.out.println("received message");
+                    if (message.getType().equals("USERS_UPDATE")) {
+                        System.out.println(message.getConnectedClients());
+                        mainPanel.getActiveUsers().setListData(message.getConnectedClients().toArray(new String[0]));
+                    } else if (message.getType().equals("MESSAGE")){
+                        mainPanel.getIncoming().append(message.getMessage() + "\n");
                     }
 
                 }
-            } catch (IOException ex) {
+            } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }
         }
